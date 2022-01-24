@@ -28,7 +28,7 @@ module.exports = {
   getUser: (req, res) => {
     connection.query(
       `
-      SELECT * FROM ??
+      SELECT * FROM user
       `, [table], function(err, rows) {
         if (err) res.status(422).json({ msg: failed }).end()
         res.json(rows)
