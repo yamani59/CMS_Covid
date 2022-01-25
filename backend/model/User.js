@@ -6,82 +6,93 @@ const failed = 'cannot be proceed'
 
 module.exports = {
   //Insert User (Post)
-  insertUser: (req, res) => {
+  insertUser: (data) => {
     const formData = {}
     for (const key in req.body) {
       formData[key] = sanitzeHtml(req.body[key])
     }
-    connection.query(
-      `
-      INSERT INTO ?? SET ?
-      `, [table, formData], function (err, rows) {
-      if (err) res.status(422).json({ msg: failed }).end()
-      res.status(200)
-      res.json({
-        msg: 'admin added successfully'
+    return new Promise((resolved, reject) => {
+      connection.query(
+        `
+        INSERT INTO ?? SET ?
+        `, [table, formData], function (err, rows) {
+        if (err) reject(err)
+        resolved()
       })
-      res.end()
     })
   },
 
   //get User
-  getUser: (req, res) => {
-    connection.query(
-      `
-      SELECT * FROM user
-      `, [table], function(err, rows) {
-        if (err) res.status(422).json({ msg: failed }).end()
-        res.json(rows)
-        res.status(200)
-        res.end()
-      }
-    )
+  getUser: () => {
+    return new Promise((resolved, reject) => {
+      connection.query(
+        `
+        SELECT * FROM user
+        `, [table], function(err, rows) {
+          if (err) reject(err)
+          resolved(rows)
+        }
+      )
+    })
   },
 
-  //get User by Id
-  getUserById: (req, res) => {
-    const param = req.params.id
-    connection.query(
-      `
-      SELECT * FROM ?? WHERE ?? = ?
-      `, [table, 'id', param], function (err, rows) {
-        if (err) res.status(422).json({ msg: failed }).end()
-        res.status(200).json(rows).end()
-      }
-    )
+  //get User by
+  getUserBy: (column, value) => {
+    return new Promise((resolved, reject) => {
+      connection.query(
+        `
+        SELECT * FROM ?? WHERE ?? = ?
+        `, [table, column, value], function (err, rows) {
+          if (err) reject(err)
+          resolved(rows)
+        }
+      )
+    })
   },
 
   //update User
-  updateUser: (req, res) => {
-    const param = req.params.id
+  updateUser: (data, param) => {
     const formData = {}
-    for (const key in req.body) {
-      formData[key] = sanitzeHtml(req.body[key])
+    for (const key in data) {
+      formData[key] = sanitzeHtml(data[key])
     }
-    connection.query(
-      `
-      UPDATE ?? SET ? WHERE ?? = ?
-      `, [table, formData, 'id', param], function (err, rows) {
-        if (err)  res.status(422).json({ msg: failed })
-        res.status(200).json({
-          msg: 'admin updated successfully'
-        }).end()
-      }
-    )
+    return new Promise((resolved, reject) => {
+      connection.query(
+        `
+        UPDATE ?? SET ? WHERE ?? = ?
+        `, [table, formData, 'id', param], function (err, rows) {
+          if (err) reject(err)
+          resolved(rows)
+        }
+      )
+    })
   },
 
   //delete User
-  deleteUser: (req, res) => {
-    const param = req.params.id
-    connection.query(
-      `
-      DELETE FROM ?? WHERE ?? = ?
-      `, [table, 'id', param], function (err, rows) {
-        if (err)  res.status(422).json({ msg: failed }).end()
-        res.status(200).json({
-          msg: 'admin deleted successfully'
-        }).end()
-      }
-    )
+  deleteUser: (param) => {
+    return new Promise((resolved, reject) => {
+      connection.query(
+        `
+        DELETE FROM ?? WHERE ?? = ?
+        `, [table, 'id', param], function (err, rows) {
+          if (err) reject(err)
+          resolved()
+        }
+      )
+    })
+  },
+
+  // insert token to access_token
+  insertToken: (data) => {
+    return new Promise((resolved, reject) => {
+      connection.query(
+        `
+        INSERT INTO ?? SET ?
+        `['access_token', data], function (err, rows) {
+          if (err) reject(err)
+          resolved()
+        }
+      )
+    })
   }
 }

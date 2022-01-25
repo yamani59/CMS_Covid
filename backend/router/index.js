@@ -1,7 +1,7 @@
 const app = require('express').Router()
-const { User } = require('../model')
+const control = require('../controller')
 
 app.route('/v1/auth/login')
-  .post(User.insertUser)
+  .post(control.login)
 
 module.exports = app
