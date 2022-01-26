@@ -15,35 +15,42 @@ module.exports = {
   },
 
   // for authorization API
-  authorizationCheck: (req, res, next) => {
-    const tokenWithBearer = req.headers.authorizatioin
+  authorization: (req, res, next) => {
+    console.log(req.headers)
+    const tokenWithBearer = req.headers.authorization
     if (!tokenWithBearer) res.status(401).json({ msg: 'unauthorization be procced' }).end()
-    const token = tokenWithBearer.split(' ')[1]
+    const token = tokenWithBearer.split(" ")[1]
     jwt.verify(token, process.env.TOKEN_SECRET, function(err, decoded) {
       if (err) res.status(401).json({ msg: 'unauthorization user' }).end()
       req.auth = decoded
+      req.token = token
       next()
     })
   },
 
   // for authentication 
-  authentication: (req, res, next) => {
-    const { username, password } = req.body
+  authentication: (req, res) => {
+    const { username } = req.body
     User.getUserBy('username', username)
       .then(resolved => {
-        const token = jwt.sign({username}, procced.env.TOKEN_SECRET, { expiresIn: '1h' })
+        const token = jwt.sign({username}, process.env.TOKEN_SECRET, { expiresIn: '1h' })
         const tokenInsert = {
-          userId: resolved[0].id,
-          token: token,
-          id: ip.address()
+          user_id: resolved[0].id,
+          acces_token: token,
+          ip_adress: ip.address()
         }
 
         User.insertToken(tokenInsert)
-          .then(token => {
-            next()
-          }).catch(err => {
+          .then(() => {
+            res.status(200).json({
+              msg: 'invalid authentication',
+              token: token
+            }).end()
+          }).catch((err) => {
+            console.log(err)
             res.status(401).json({ msg: 'unauthorization user' }).end()
           })
       })
-  }
+  },
+
 }

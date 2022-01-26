@@ -8,8 +8,8 @@ module.exports = {
   //Insert User (Post)
   insertUser: (data) => {
     const formData = {}
-    for (const key in req.body) {
-      formData[key] = sanitzeHtml(req.body[key])
+    for (const key in data) {
+      formData[key] = sanitzeHtml(data[key])
     }
     return new Promise((resolved, reject) => {
       connection.query(
@@ -27,7 +27,7 @@ module.exports = {
     return new Promise((resolved, reject) => {
       connection.query(
         `
-        SELECT * FROM user
+        SELECT * FROM ??
         `, [table], function(err, rows) {
           if (err) reject(err)
           resolved(rows)
@@ -84,11 +84,30 @@ module.exports = {
 
   // insert token to access_token
   insertToken: (data) => {
+    const fiels = {
+      user_id: data.user_id,
+      acces_token: data.acces_token,
+      ip_adress: data.ip_adress
+    }
     return new Promise((resolved, reject) => {
       connection.query(
         `
         INSERT INTO ?? SET ?
-        `['access_token', data], function (err, rows) {
+        `,['access_token', fiels], function (err, rows) {
+          if (err) reject(err)
+          resolved()
+        }
+      )
+    })
+  },
+
+  // delete token (logout)
+  deleteToken: (param) => {
+    return new Promise((resolved, reject) => {
+      connection.query(
+        `
+        DELETE FROM ?? WHERE ?? = ?
+        `, ['access_token', 'acces_token', param], function (err, rows) {
           if (err) reject(err)
           resolved()
         }
