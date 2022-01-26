@@ -85,6 +85,12 @@ module.exports = {
     })
   },
 
+
+
+  /*
+      Crud query for category table
+  */
+
   // for insert category
   insertCategory: (data) => {
     const formData = {}
@@ -127,6 +133,29 @@ module.exports = {
           if (err) reject(err)
           resolved(rows)
         }
+      )
+    })
+  },
+
+
+
+  /*
+      Crud for slide table
+  */
+
+  // insert slide
+  insertSlide: (data) => {
+    const formData = {
+      title: sanitzeHtml(data.title),
+      description: sanitzeHtml(data.description),
+      link: sanitzeHtml(data.link),
+      image: sanitzeHtml(data.image)
+    }
+    return new Promise((resolved, reject) => {
+      connection.query(
+        `
+            b         
+        `
       )
     })
   }
