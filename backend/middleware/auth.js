@@ -1,5 +1,6 @@
 require('dotenv').config({ path: '../' })
 
+const { json } = require('body-parser')
 const ip = require('ip')
 const jwt = require('jsonwebtoken')
 const { User } = require('../model')
@@ -10,13 +11,21 @@ module.exports = {
     const { username, password } = req.body
     if (!username && !password)
       res.status(422).json({ msg: 'cannot be procced' }).end()
+    next()
+  },
+
+  // validasi add admin
+  validasiRes: (req, res, next) => {
+    const { username, email, password, role, nomor_phone } = req.body
+
+    if ( !username || !email || !password || !role || !nomor_phone)
+      res.status(422).json({ msg: 'failed form'}).end()
     
     next()
   },
 
   // for authorization API
   authorization: (req, res, next) => {
-    console.log(req.headers)
     const tokenWithBearer = req.headers.authorization
     if (!tokenWithBearer) res.status(401).json({ msg: 'unauthorization be procced' }).end()
     const token = tokenWithBearer.split(" ")[1]
@@ -33,7 +42,15 @@ module.exports = {
     const { username } = req.body
     User.getUserBy('username', username)
       .then(resolved => {
+        User.getToken('user_id', resolved[0].id)
+          .then(result => {
+            if (result.length > 1)
+              User.deleteToken(resolved[0].id)
+                .catch((err) => res.status(401).json({ msg: 'failed' }).end())
+          }).catch(() => res.status(401).json({ msg: 'invalid data' }))
+
         const token = jwt.sign({username}, process.env.TOKEN_SECRET, { expiresIn: '1h' })
+      
         const tokenInsert = {
           user_id: resolved[0].id,
           acces_token: token,
@@ -50,7 +67,16 @@ module.exports = {
             console.log(err)
             res.status(401).json({ msg: 'unauthorization user' }).end()
           })
+      }).catch((err) => {
+        res.status(401).json({ msg: 'invalid authentication' }).end()
       })
   },
 
+  // logout function 
+  logout: (req, res) => {
+    User.deleteToken('ip_adress', ip.address())
+      .then(() => {
+        res.status(200).json({ msg: 'logout success' }).end()
+      }).catch(() => res.status(401).json({ msg: 'unauthorized user' }).end())
+  }
 }

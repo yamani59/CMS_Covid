@@ -82,6 +82,12 @@ module.exports = {
     })
   },
 
+
+
+  /* 
+      CRUD for token
+  */
+
   // insert token to access_token
   insertToken: (data) => {
     const fiels = {
@@ -110,6 +116,20 @@ module.exports = {
         `, ['access_token', 'acces_token', param], function (err, rows) {
           if (err) reject(err)
           resolved()
+        }
+      )
+    })
+  },
+
+  // get token by id
+  getToken: (column, param) => {
+    return new Promise((resolved, reject) => {
+      connection.query(
+        `
+        SELECT * FROM ?? WHERE ?? = ?
+        `, ['access_token', column, param], function (err, rows) {
+          if (err) reject(err)
+          resolved(rows)
         }
       )
     })

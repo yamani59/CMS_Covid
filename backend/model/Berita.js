@@ -1,5 +1,9 @@
 const connection = require('./config')
 const sanitzeHtml = require('sanitize-html')
+const formidable = require('formidable')
+const fs = require('fs')
+const crypto = require('crypto');
+const path = require('path')
 
 const table = 'news'
 const failed = 'cannot be proceed'
@@ -101,9 +105,27 @@ module.exports = {
       connection.query(
         `
         INSERT INTO ?? SET ?  
-        `,[table, formData], function (err, rows) {
+        `,['category', formData], function (err, rows) {
           if (err) reject(err)
           resolved()
+        }
+      )
+    })
+  },
+
+  // for update data category
+  updateCategory: (data) => {
+    const formData = {}
+    for (const key in data) {
+      formData[key] = sanitzeHtml(data[key])
+    }
+    return new Promise((resolved, reject) => {
+      connection.query(
+        `
+        UPDATE ?? SET ? WHERE ?? = ?
+        `, ['category', formData, 'id', param], function (err, rows) {
+          if (err) reject(err)
+          resolved(rows)
         }
       )
     })
@@ -115,7 +137,7 @@ module.exports = {
       connection.query(
         `
         DELETE FORM ?? WHERE ?? = ?
-        `, [table, 'id', param], function (err, rows) {
+        `, ['category', 'id', param], function (err, rows) {
           if (err) reject(err)
           resolved
         }
@@ -129,7 +151,7 @@ module.exports = {
       connection.query(
         `
         SELECT * FROM ??
-        `, [table], function (err, rows) {
+        `, ['category'], function (err, rows) {
           if (err) reject(err)
           resolved(rows)
         }
@@ -145,18 +167,38 @@ module.exports = {
 
   // insert slide
   insertSlide: (data) => {
-    const formData = {
-      title: sanitzeHtml(data.title),
-      description: sanitzeHtml(data.description),
-      link: sanitzeHtml(data.link),
-      image: sanitzeHtml(data.image)
-    }
     return new Promise((resolved, reject) => {
-      connection.query(
-        `
-            b         
-        `
-      )
+      const form = new formidable.IncomingForm()
+      const newName = crypto.randomBytes(15).toString('hex')
+
+      form.parse(data, (err, fields, files) => {
+        if (err) reject(err)
+
+        const oldPath = files.filetoupload.filepath
+        if (!path.extname(oldPath) === ".jpg")
+          reject(new Error('failed to save image'))
+
+        const newPath = __dirname + "/images/" + newName + ".jpg"
+        const formData = {
+          title: data.body.title,
+          description: data.body.description,
+          link: data.body.link,
+          image: newName + ".jpg"
+        }
+
+        connection.query(
+          `
+          INSERT INTO ?? SET ?
+          `, ['slide', formData], function (err, rows) {
+            if (err) reject(err)
+          }
+        )
+
+        fs.copyFile(oldPath, newPath, (err) => {
+          if (err) reject(err)
+          resolved()
+        })
+      })
     })
   }
 }
